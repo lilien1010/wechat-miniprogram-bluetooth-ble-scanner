@@ -14,7 +14,7 @@
 }
 
 .device-list {
-  height: 300rpx;
+  height: 700rpx;
 }
 
 .device-item {

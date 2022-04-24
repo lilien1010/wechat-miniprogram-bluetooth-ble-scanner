@@ -9,6 +9,11 @@
 </wxs>
 <view class="container">
   <view class="page-section">
+
+    <view wx:for="{{barcode}}" wx:key="index" >
+        <view style="font-size: 16px; color: #333;">条码：{{item}}</view>
+      </view>
+
     <view class="devices-summary">已发现 {{devices.length}} 个外围设备：</view>
     <scroll-view class="device-list" scroll-y scroll-with-animation>
       <view wx:for="{{devices}}" wx:key="index" data-device-id="{{item.deviceId}}" data-name="{{item.name || item.localName}}" bindtap="createBLEConnection" class="device-item" hover-class="device-item-hover">

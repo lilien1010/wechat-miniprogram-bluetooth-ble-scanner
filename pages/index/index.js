@@ -11,6 +11,10 @@ function inArray(arr, key, val) {
   return -1
 }
 
+function ab2str(buf) {
+  return String.fromCharCode.apply(null, new Uint8Array(buf));
+}
+
 // ArrayBuffer转16进度字符串示例
 function ab2hex(buffer) {
   const hexArr = Array.prototype.map.call(
@@ -36,7 +40,8 @@ Page({
   data: {
     devices: [],
     connected: false,
-    chs: []
+    chs: [],
+    barcode :[],
   },
   onUnload() {
     this.closeBluetoothAdapter()
@@ -127,10 +132,15 @@ Page({
   },
   onBluetoothDeviceFound() {
     wx.onBluetoothDeviceFound((res) => {
+
+      console.log('onBluetoothDeviceFound res',res)
       res.devices.forEach(device => {
-        if (!device.name && !device.localName) {
+        if (!device.name && !device.localName) { 
           return
         }
+
+      console.log('onBluetoothDeviceFound device',device)
+
         const foundDevices = this.data.devices
         const idx = inArray(foundDevices, 'deviceId', device.deviceId)
         const data = {}
@@ -183,6 +193,7 @@ Page({
       connected: false,
       chs: [],
       canWrite: false,
+      barcode:[],
     })
   },
   getBLEDeviceServices(deviceId) {
@@ -192,14 +203,14 @@ Page({
         console.log('getBLEDeviceServices', res)
         for (let i = 0; i < res.services.length; i++) {
           if (res.services[i].isPrimary) {
-            this.getBLEDeviceCharacteristics(deviceId, res.services[i].uuid)
-            return
+            this.getBLEDeviceCharacteristics(deviceId, res.services[i].uuid) 
           }
         }
       }
     })
   },
   getBLEDeviceCharacteristics(deviceId, serviceId) {
+    let that = this;
     wx.getBLEDeviceCharacteristics({
       deviceId,
       serviceId,
@@ -207,15 +218,102 @@ Page({
         console.log('getBLEDeviceCharacteristics success', res.characteristics)
         // 这里会存在特征值是支持write，写入成功但是没有任何反应的情况
         // 只能一个个去试
-        for (let i = 0; i < res.characteristics.length; i++) {
+        for (let i = 0; i < res.characteristics.length; i++) { 
           const item = res.characteristics[i]
-          if (item.properties.write) {
+          if (item.properties.indicate){
+            console.log('getBLEDeviceCharacteristics indicate item is true', item)
+          }else{
+            console.log('getBLEDeviceCharacteristics indicate item is false', item)
+            return
+          }
+          if ( item.properties.notify && item.properties.indicate) {
             this.setData({
               canWrite: true
             })
             this._deviceId = deviceId
             this._serviceId = serviceId
             this._characteristicId = item.uuid
+
+
+            wx.notifyBLECharacteristicValueChange({
+              characteristicId: item.uuid,
+              
+              deviceId: deviceId,
+              
+              serviceId: serviceId,
+              
+              state: true,
+              type:'notification',
+              fail (res) {
+                  console.log({res})
+              },
+              complete:function(res){ 
+                console.log('44444444444444444444444',res)
+        
+              },
+              success:function(res){
+              
+              console.log('notify启用',res); 
+                  wx.onBLECharacteristicValueChange((result) => { 
+                    console.log('监听特征值变化',result); 
+                    const barcode = [ab2str(result.value),...that.data.barcode];
+                    that.setData({barcode}) 
+                  })
+              }
+              
+              });
+
+              let buffer = new ArrayBuffer(1)
+              let dataView = new DataView(buffer)
+              dataView.setUint8(0, 0)
+              console.log('要发送的信息是：' ,buffer)
+
+              setTimeout(function(){ 
+                var thisWriteDeviceId = deviceId
+          
+                var thisWriteServiceId =  serviceId
+          
+                var thisWriteCharacteristicId =item.uuid
+          
+                  wx.writeBLECharacteristicValue({
+            
+                    deviceId: thisWriteDeviceId,
+            
+                    serviceId: thisWriteServiceId,
+            
+                    characteristicId: thisWriteCharacteristicId,
+            
+                    value: buffer,
+            
+                    success: function(res) { 
+                      console.log(res,"发送成功"); 
+                    },
+            
+                    fail: function(res){ 
+                      console.log(res,"发送失败." ); 
+                    },
+            
+                    complete: function(ret){
+                        console.log(res,"发送失败." ); 
+                    }
+                  });
+                },500); 
+          ///
+            /**
+               * 坑就在这里了，对于安卓系统，需要添加下面这段代码。你写完数据后，还必须读一次，才能被onBLECharacteristicValueChange监听到，才会把数据返回给你，
+               * 但在苹果系统里面就不能有下面这段代码了，因为如果你添加上去的话，会出现发一次指令出现两次返回值的情况
+               */ 
+                  wx.readBLECharacteristicValue({
+                    deviceId: deviceId,
+                    serviceId: serviceId,
+                    characteristicId: item.uuid,
+                    success: function (res) {
+                        console.log('readBLECharacteristicValue',res)
+                    },fail(res){
+                      console.log('fail',res)
+                    }
+                }) 
+
             break;
           }
         }
