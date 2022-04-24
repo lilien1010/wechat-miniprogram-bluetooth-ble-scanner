@@ -3,6 +3,7 @@
 
 * 测试扫码枪：[维融（weirong）LP1无线红光蓝牙扫描器 一维 蓝牙 1100mAh](https://u.jd.com/ZtHT8dm)
 * 测试设备：iPhone 11 Pro Max
+* 扫码枪设备必须支持 ：BLE模式 （无论安卓 还是 iOS 打开扫码枪之后都要进入 BLE模式）
 
 ### 效果图
 <div>
