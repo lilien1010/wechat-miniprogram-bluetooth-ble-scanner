@@ -6,7 +6,7 @@
 
 ### 效果图
 <div>
-    <img src="img/screen1.png" width="400"><img src="img/screen2.jpg" width="400">
+    <img src="img/screen1.PNG" width="400"><img src="img/screen2.jpg" width="400">
 </div>
 
 ### 流程
@@ -22,6 +22,21 @@
 ### 注意点
 **1.与蓝牙设备通信很重要的就是找到对应的Characteristic。如何找到这个Characteristic？**  
 目前只能一个个去试！！！如果有更好的做法请告诉我。
+
+
+连接成功之后，在程序的任何地方,做如下监听，都可以实现读取条码
+```
+function ab2str(buf) {
+  return String.fromCharCode.apply(null, new Uint8Array(buf));
+}
+
+
+wx.onBLECharacteristicValueChange((result) => { 
+    console.log('监听特征值变化',result); 
+    const barcode = ab2str(result.value);
+    that.setData({barcode}) 
+})
+```
 
 ### 参考
 * [微信小程序API](https://developers.weixin.qq.com/miniprogram/dev/api/)

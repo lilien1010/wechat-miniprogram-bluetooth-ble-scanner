@@ -259,61 +259,8 @@ Page({
                     const barcode = [ab2str(result.value),...that.data.barcode];
                     that.setData({barcode}) 
                   })
-              }
-              
-              });
-
-              let buffer = new ArrayBuffer(1)
-              let dataView = new DataView(buffer)
-              dataView.setUint8(0, 0)
-              console.log('要发送的信息是：' ,buffer)
-
-              setTimeout(function(){ 
-                var thisWriteDeviceId = deviceId
-          
-                var thisWriteServiceId =  serviceId
-          
-                var thisWriteCharacteristicId =item.uuid
-          
-                  wx.writeBLECharacteristicValue({
-            
-                    deviceId: thisWriteDeviceId,
-            
-                    serviceId: thisWriteServiceId,
-            
-                    characteristicId: thisWriteCharacteristicId,
-            
-                    value: buffer,
-            
-                    success: function(res) { 
-                      console.log(res,"发送成功"); 
-                    },
-            
-                    fail: function(res){ 
-                      console.log(res,"发送失败." ); 
-                    },
-            
-                    complete: function(ret){
-                        console.log(res,"发送失败." ); 
-                    }
-                  });
-                },500); 
-          ///
-            /**
-               * 坑就在这里了，对于安卓系统，需要添加下面这段代码。你写完数据后，还必须读一次，才能被onBLECharacteristicValueChange监听到，才会把数据返回给你，
-               * 但在苹果系统里面就不能有下面这段代码了，因为如果你添加上去的话，会出现发一次指令出现两次返回值的情况
-               */ 
-                  wx.readBLECharacteristicValue({
-                    deviceId: deviceId,
-                    serviceId: serviceId,
-                    characteristicId: item.uuid,
-                    success: function (res) {
-                        console.log('readBLECharacteristicValue',res)
-                    },fail(res){
-                      console.log('fail',res)
-                    }
-                }) 
-
+              } 
+          }); 
             break;
           }
         }
